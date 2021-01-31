@@ -43,17 +43,9 @@ end
 
 options = ARGV.getopts('a', 'l', 'r')
 
-if options["a"] # 三項演算子でできるか？
-  files = Dir.glob("*", File::FNM_DOTMATCH)
-else
-  files = Dir.glob("*")
-end
+options["a"] ? files = Dir.glob("*", File::FNM_DOTMATCH).sort : files = Dir.glob("*").sort
 
-files.sort!
-
-if options["r"] # 1行にできそう
-  files.reverse!
-end
+files.reverse! if options["r"]
 
 if options["l"]
   file_status = []
@@ -76,11 +68,12 @@ end
 
 column = files.size / 3
 
+files_turning = files.dup
 files_display = []
 if files.size > 3
   if files.size % 3 == 1
-    files_display << files.slice!(0, column + 1)
-    files.each_slice(column) {|file|
+    files_display << files_turning.slice!(0, column + 1)
+    files_turning.each_slice(column) {|file|
       files_display << file
     }
     files_display[1] << nil
@@ -101,7 +94,7 @@ if files.size > 3
   files_display[2].compact! if files_display.size > 5
 end
 
-if !options["l"]
+if files.size > 3 && !options["l"]
   files_display.each do |line|
     line.each do |file|
       print sprintf("%-18s", file)
