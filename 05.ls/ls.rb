@@ -102,5 +102,6 @@ if files.size > 3 && !options['l']
     puts ''
   end
 else
+  puts "total #{total_blocks}"
   puts files
 end
