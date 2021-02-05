@@ -6,17 +6,17 @@ require 'etc'
 
 def file_mode(file)
   permission = File.stat(file).mode.to_s(8).slice(-3, 3).chars
+  permission_list = {
+    '7' => 'rwx',
+    '6' => 'rw-',
+    '5' => 'r-x',
+    '4' => 'r--',
+    '3' => '-wx',
+    '2' => '-w-',
+    '1' => '--x',
+    '0' => '---'
+  }
   permission.map! do |x|
-    permission_list = {
-      '7' => 'rwx',
-      '6' => 'rw-',
-      '5' => 'r-x',
-      '4' => 'r--',
-      '3' => '-wx',
-      '2' => '-w-',
-      '1' => '--x',
-      '0' => '---'
-    }
     permission_list[x]
   end
   permission.insert(0, file_type(file)).join
@@ -39,7 +39,8 @@ end
 
 def file_time(file)
   t = File.stat(file).mtime
-  if t <= Time.now + (60 * 60 * 24 * 180) && t >= Time.now - (60 * 60 * 24 * 180)
+  half_year = 60 * 60 * 24 * 180
+  if t <= Time.now + half_year && t >= Time.now - half_year
     t.strftime('%_m %_d %H:%M')
   else
     t.strftime('%_m %_d  %Y')
@@ -48,15 +49,16 @@ end
 
 options = ARGV.getopts('a', 'l', 'r')
 
-files = options['a'] ? Dir.glob('*', File::FNM_DOTMATCH).sort : Dir.glob('*').sort
+files = options['a'] ? Dir.glob('*', File::FNM_DOTMATCH) : Dir.glob('*')
+files.sort!
 
 files.reverse! if options['r']
 
 if options['l']
   file_status = []
-  s = []
   total_blocks = 0
   files.each do |file|
+    s = []
     s << file_mode(file)
     s << File.stat(file).nlink
     s << Etc.getpwuid(File.stat(file).uid).name
@@ -66,7 +68,6 @@ if options['l']
     s << file
     total_blocks += File.stat(file).blocks
     file_status << s.join(' ')
-    s.clear
   end
   files = file_status
 end
