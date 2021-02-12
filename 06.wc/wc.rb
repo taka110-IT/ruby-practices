@@ -3,6 +3,14 @@
 
 require 'optparse'
 
+def line_count(l)
+  l.count("\n")
+end
+
+def word_count(w)
+  w.split(/\s+|[[:blank:]]+/).size
+end
+
 options = ARGV.getopts('l')
 files = ARGV
 file_contents = []
@@ -12,18 +20,18 @@ total_size = 0
 
 if File.pipe?(STDIN)
   ls_pipe = STDIN.read
-  total_line = ls_pipe.count("\n")
-  total_word = ls_pipe.split(/\s+|[[:blank:]]+/).size
+  total_line = line_count(ls_pipe)
+  total_word = word_count(ls_pipe)
   total_size = ls_pipe.size
 else
   files.each_with_index do |file, index|
     File.open(file, 'r') do |f|
       content = f.read
       s = []
-      s << content.count("\n")
-      total_line += content.count("\n")
-      s << content.split(/\s+|[[:blank:]]+/).size
-      total_word += content.split(/\s+|[[:blank:]]+/).size
+      s << line_count(content)
+      total_line += line_count(content)
+      s << word_count(content)
+      total_word += word_count(content)
       s << File.stat(f).size
       total_size += File.stat(f).size
       s << f.path
