@@ -3,12 +3,12 @@
 
 require 'optparse'
 
-def line_count(l)
-  l.count("\n")
+def line_count(content)
+  content.count("\n")
 end
 
-def word_count(w)
-  w.split(/\s+|[[:blank:]]+/).size
+def word_count(content)
+  content.split(/\s+|[[:blank:]]+/).size
 end
 
 options = ARGV.getopts('l')
@@ -18,13 +18,13 @@ total_line = 0
 total_word = 0
 total_size = 0
 
-if File.pipe?(STDIN)
-  ls_pipe = STDIN.read
-  total_line = line_count(ls_pipe)
-  total_word = word_count(ls_pipe)
-  total_size = ls_pipe.size
+if File.pipe?($stdin)
+  content = $stdin.read
+  total_line = line_count(content)
+  total_word = word_count(content)
+  total_size = content.size
 else
-  files.each_with_index do |file, index|
+  files.each do |file|
     File.open(file, 'r') do |f|
       content = f.read
       s = []
@@ -40,18 +40,28 @@ else
   end
 end
 
-if File.pipe?(STDIN)
-  puts options['l'] ? format("% 8d", total_line) : format("% 8d% 8d% 8d", total_line, total_word, total_size)
-elsif options['l']
-  file_contents.each do |line, word, size, name|
-    print format("% 8d", line)
-    puts (" #{name}")
+if File.pipe?($stdin)
+  if options['l']
+    puts format('% 8d', total_line)
+  else
+    print format('% 8d', total_line)
+    print format('% 8d', total_word)
+    puts format('% 8d', total_size)
   end
-  puts format("% 8d total", total_line) if files.size >= 2
+elsif options['l']
+  file_contents.each do |line, _word, _size, name|
+    print format('% 8d', line)
+    puts " #{name}"
+  end
+  puts format('% 8d total', total_line) if files.size >= 2
 else
   file_contents.each do |line, word, size, name|
-    print format("% 8d% 8d% 8d", line, word, size)
-    puts (" #{name}")
+    print format('% 8<line>d% 8<word>d% 8<size>d', line: line, word: word, size: size)
+    puts " #{name}"
   end
-  puts format("% 8d% 8d% 8d total", total_line, total_word, total_size) if files.size >= 2
+  if files.size >= 2
+    print format('% 8d', total_line)
+    print format('% 8d', total_word)
+    puts format('% 8d total', total_size)
+  end
 end
