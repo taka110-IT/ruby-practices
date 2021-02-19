@@ -14,41 +14,36 @@ end
 options = ARGV.getopts('l')
 files = ARGV
 file_contents = []
+file_contents_separately = []
 total_line = 0
 total_word = 0
 total_size = 0
 
 if File.pipe?($stdin)
   content = $stdin.read
-  total_line = line_count(content)
-  total_word = word_count(content)
-  total_size = content.size
+  file_contents_separately << line_count(content)
+  file_contents_separately << word_count(content)
+  file_contents_separately << content.size
+  file_contents_separately << nil
+  file_contents << file_contents_separately
 else
   files.each do |file|
     File.open(file, 'r') do |f|
       content = f.read
-      s = []
-      s << line_count(content)
+      file_contents_separately << line_count(content)
       total_line += line_count(content)
-      s << word_count(content)
+      file_contents_separately << word_count(content)
       total_word += word_count(content)
-      s << File.stat(f).size
+      file_contents_separately << File.stat(f).size
       total_size += File.stat(f).size
-      s << f.path
-      file_contents << s
+      file_contents_separately << f.path
+      file_contents << file_contents_separately.dup
+      file_contents_separately.clear
     end
   end
 end
 
-if File.pipe?($stdin)
-  if options['l']
-    puts format('% 8d', total_line)
-  else
-    print format('% 8d', total_line)
-    print format('% 8d', total_word)
-    puts format('% 8d', total_size)
-  end
-elsif options['l']
+if options['l']
   file_contents.each do |line, _word, _size, name|
     print format('% 8d', line)
     puts " #{name}"
